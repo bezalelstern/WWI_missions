@@ -1,3 +1,5 @@
+
+CREATE INDEX idx_mission_year ON mission (date_part('year', mission_date));
 SELECT
     mission.air_force,
     mission.target_city,
@@ -11,6 +13,9 @@ GROUP BY
 ORDER BY
     mission_count DESC
 LIMIT 1;
+
+
+CREATE INDEX idx_airborne_aircraft ON mission (airborne_aircraft);
 
 SELECT
     mission.target_country,

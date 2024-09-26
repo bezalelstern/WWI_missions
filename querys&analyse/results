@@ -1,0 +1,31 @@
+ניתוח שאילתא 1
+לפני אינדקס:
+שלב 1: ביצוע ספירה על הטבלה
+שלב 2: מיון הטבלה לפי מפתחות של חיל האויר והמטרה
+שלב 3: חילוץ השנה ובדיקת התנאי
+זמנים:
+Planning Time: 0.942 ms
+Execution Time: 53.969 ms
+הוחלט לבצע אינדקס לפי השנה כדי לייתר את חילוץ השנה:
+CREATE INDEX idx_mission_year ON mission (date_part('year', mission_date));
+אחרי ביצוע האינדקס הזמנים נחתכו ל:
+Planning Time: 0.146 ms
+Execution Time: 7.944 ms
+
+
+
+ניתוח שאילתא 2:
+שלב 1:
+מיון לפי מפתח עיר מטרה
+שלב 2:
+קיבוץ הנתונים לפי מטרה
+שלב 3:
+בדיקת התנאי לפי מספר מטוסים
+זמנים:
+Planning Time: 0.093 ms
+Execution Time: 40.931 ms
+אינדקס למספר המטוסים:
+CREATE INDEX idx_airborne_aircraft ON mission (airborne_aircraft);
+הרצה לאחר האינדקס:
+Planning Time: 0.142 ms
+Execution Time: 20.302 ms
