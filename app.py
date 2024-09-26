@@ -23,5 +23,5 @@ app.register_blueprint(mission_bp, url_prefix="/api")
 
 
 if __name__ == "__main__":
-    normalize_db()
+    #normalize_db()
     app.run(debug=True)

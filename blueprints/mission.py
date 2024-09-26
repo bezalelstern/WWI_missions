@@ -19,9 +19,9 @@ def get_missions(id):
         cur = conn.cursor()
         cur.execute(query, params)
         missions = cur.fetchall()
-        json = [dict(zip([col[0] for col in cur.description], row)) for row in missions]
+        missions_json = [dict(zip([col[0] for col in cur.description], row)) for row in missions]
         log(f'Getting mission with id: {id}. 200')
-        return jsonify({"missions": json}), 200
+        return jsonify({"missions": missions_json}), 200
     except psycopg2.Error as e:
         log_error(f'Error: {e}')
         print(e)
@@ -55,3 +55,12 @@ def get_all_missions():
         if cur:
             cur.close()
         release_db_connection(conn)
+
+def make_dict(missions,cur):
+    missions_json = []
+    for row in missions:
+        mission_dict = {}
+        for col in cur.description:
+            mission_dict[col[0]] = row[col[1]]
+        missions_json.append(mission_dict)
+    return missions_json
