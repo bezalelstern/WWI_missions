@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request
-
+import psycopg2
+from db import get_db_connection, release_db_connection
 
 
 mission_bp = Blueprint("mission", __name__)
@@ -7,37 +8,45 @@ mission_bp = Blueprint("mission", __name__)
 
 
 
+@mission_bp.route('/mission/<int:id>', methods=['GET'])
+def get_missions(id):
+    conn = get_db_connection()
+    query = """
+       SELECT * FROM mission where mission_id = %s; 
+       """
+    params = (id,)
+    try:
+        cur = conn.cursor()
+        cur.execute(query, params)
+        missions = cur.fetchall()
+        return jsonify({"missions": missions}), 200
+    except psycopg2.Error as e:
+        # log_error(f'Error: {e}')
+        print(e)
+        return jsonify({"error": str(e)}), 500
+    finally:
+        if cur:
+            cur.close()
+        release_db_connection(conn)
 
 
-@mission_bp.route('/mission/<str:table>', methods=['GET'])
-def create_table(table):
-    request_info = {
-        "ip": request.remote_addr,
-        "endpoint": request.url,
-        "method": request.method
-    }
-    if table == "users":
-        result = create_users_table(request_info)
-    elif table == "payments":
-        result = create_payments_table(request_info)
 
-    if result:
-        return jsonify({"result": result}), 201
-    else:
-        return jsonify({"result": result}), 400
+@mission_bp.route('/mission', methods=['GET'])
+def get_all_missions():
+    conn = get_db_connection()
+    query = """
+           SELECT * FROM mission
+           """
+    try:
+        cur = conn.cursor()
+        cur.execute(query)
+        missions = cur.fetchall()
+        return jsonify({"missions": missions}), 200
+    except psycopg2.Error as e:
 
-
-
-
-@admin_bp.route('/alter', methods=['POST'])
-def alter_table():
-    request_info = {
-        "ip": request.remote_addr,
-        "endpoint": request.url,
-        "method": request.method
-    }
-    result = alter_users_table(request_info)
-    if result is True:
-        return jsonify({"result": result}), 200
-    else:
-        return jsonify({"result": result}), 400
+        print(e)
+        return jsonify({"error": str(e)}), 500
+    finally:
+        if cur:
+            cur.close()
+        release_db_connection(conn)

@@ -1,116 +1,159 @@
-from postgres_proj.db import get_db_connection
+from db import get_db_connection, release_db_connection
 import psycopg2
 
 def normalize_db():
+    print ("normal")
     source_conn = get_db_connection()
-    target_conn = psycopg2.connect(
-        dbname="normal_db",
-        user="omermunk",
-        password="1234",
-        host="localhost",
-        port="5432"
-    )
+    # target_conn = psycopg2.connect(
+    #     dbname="normal_db",
+    #     user="postgres",
+    #     password="1234",
+    #     host="localhost",
+    #     port="5432"
+    # )
 
     try :
-        query1 = """
-            CREATE TABLE customers (
-                    customer_id SERIAL PRIMARY KEY,
-                    customer_name VARCHAR(100),
-                    address VARCHAR(255),
-                    city VARCHAR(100)
-            )
+        query = """
+        insert into normal_mission select * from mission
         """
-        query2 = """
-            CREATE TABLE phone_numbers (
-                phone_id SERIAL PRIMARY KEY,
-                customer_id INT REFERENCES customers(customer_id),
-                phone_number VARCHAR(10)
-            )
+        query1 = """CREATE TABLE target (
+                            target_pk serial primary key,
+                            mission_id integer,
+                            country VARCHAR(100),
+                            city VARCHAR(100),
+                            type VARCHAR(100),
+                            industry VARCHAR(255),
+                            priority VARCHAR(5),
+                            latitude NUMERIC(10, 6),
+                            longitude NUMERIC(10, 6)
+                        )
         """
-
-        query3 = """
-            CREATE TABLE products (
-                product_id SERIAL PRIMARY KEY,
-                product_name VARCHAR(100),
-                supplier_id INT REFERENCES suppliers(supplier_id),
-                price NUMERIC(10, 2)
-            )
-        """
-
-
-        query4 = """
-            CREATE TABLE categories (
-                category_id SERIAL PRIMARY KEY,
-                category_name VARCHAR(100)
-            )
+        query2 = """insert into target(mission_id, country, city, type, industry, priority, latitude, longitude)
+                        SELECT DISTINCT
+                            mission_id,
+                            target_country,
+                            target_city,
+                            target_type,
+                            target_industry,
+                            target_priority,
+                            target_latitude,
+                           target_longitude
+                        from normal_mission;
         """
 
+        query3 = """ALTER TABLE normal_mission
+                        DROP COLUMN target_country,
+                        DROP COLUMN target_city,
+                        DROP COLUMN target_type,
+                        DROP COLUMN target_industry,
+                        DROP COLUMN target_priority,
+                        DROP COLUMN target_latitude,
+                        DROP COLUMN target_longitude;
+                       """
+        query3_5 = """ALTER TABLE normal_mission ADD COLUMN target_fk int references target(target_pk);"""
 
-        query5 = """
-            CREATE TABLE products_categories (
-                product_id INT REFERENCES products(product_id),
-                category_id INT REFERENCES categories(category_id),
-                primary key (product_id, category_id)
-            )
+
+        query4 = """UPDATE normal_mission
+                    SET target_fk = target.target_pk
+                    FROM target
+                    WHERE normal_mission.mission_id = target.mission_id;
         """
+
+
+        query5 = """CREATE TABLE country (
+                    country_id SERIAL PRIMARY KEY,
+                    country_name VARCHAR(100)
+                    );"""
 
 
         query6 = """
-            CREATE TABLE suppliers (
-                supplier_id SERIAL PRIMARY KEY,
-                supplier_name VARCHAR(100)
-            )
+                   CREATE TABLE city (
+                        city_id SERIAL PRIMARY KEY,
+                        city_name VARCHAR(100),
+                        country_id INTEGER REFERENCES country(country_id)
+                    );
         """
 
 
-        query7 = """
-            CREATE TABLE orders (
-                order_id SERIAL PRIMARY KEY,
-                customer_id INT references customers(customer_id),
-                order_date DATE
-            )
+        query7 = """CREATE TABLE target_type (
+        type_id SERIAL PRIMARY KEY,
+        type_name VARCHAR(100) UNIQUE
+        );
         """
 
-        query8 = """
-            CREATE TABLE order_products (
-                order_id INT REFERENCES orders(order_id),
-                product_id INT REFERENCES products(product_id),
-                quantity INT,
-                primary key (order_id, product_id)
-            )
+        query8 = """CREATE TABLE target_industry (
+                    industry_id SERIAL PRIMARY KEY,
+                    industry_name VARCHAR(255) UNIQUE
+);
         """
+        query9 = """
+        INSERT INTO country(country_name) SELECT DISTINCT target.country FROM target;
+        """
+        query10 = """
+        INSERT INTO city (city_name, country_id)
+        SELECT DISTINCT city, (SELECT country_id FROM country WHERE country_name = target.country)
+        FROM target;
+           """
+        query11= """
+        INSERT INTO target_type (type_name)
+        SELECT DISTINCT type FROM target;
+               """
+        query12 = """
+                INSERT INTO target_industry (industry_name)
+                SELECT DISTINCT industry FROM target;
+               """
+        query13 = """
+                UPDATE target
+                SET country = (
+                    SELECT country_id FROM country WHERE country.country_name = target.country
+                );
+               """
+        query14 = """
+        UPDATE target
+        SET industry = (
+        SELECT industry_id FROM target_industry WHERE target_industry.industry_name =  target.industry
+        );
+               """
+        query15 = """
+        UPDATE target
+        SET type = (
+         SELECT type_id FROM target_type WHERE target_type.type_name = target.type
+        );
+               """
+        query16 = """
+            ALTER TABLE target
+            DROP COLUMN city;
+               """
 
         # execute the queries
-        cur = target_conn.cursor()
-        cur.executemany([query1, query2, query3, query4, query5, query6, query7, query8])
-        target_conn.commit()
-
-        s_cur = source_conn.cursor()
-        s_cur.execute("SELECT * FROM customers")
-        while True:
-            customer_row = s_cur.fetchone()
-            if customer_row is None:
-                break
-
-            customer_name = customer_row[1]
-            address = customer_row[3]
-            city = customer_row[4]
-            phone_numbers = customer_row[2].split(",")
-
-            cur.execute("INSERT INTO customers (customer_name, address, city)"
-                        " VALUES (%s, %s, %s) RETURNING customer_id",
-                        (customer_name, address, city))
-            customer_id = cur.fetchone()[0]
-
-            for phone_number in phone_numbers:
-                cur.execute("INSERT INTO phone_numbers (customer_id, phone_number)"
-                            " VALUES (%s, %s)", (customer_id, phone_number))
-
-
+        cur = source_conn.cursor()
+        print("Executing queries...")
+        with source_conn.cursor() as cursor:
+            cursor.execute(query)
+            source_conn.commit()
+            cursor.execute(query1)
+            cursor.execute(query2)
+            cursor.execute(query3)
+            cursor.execute(query3_5)
+            cursor.execute(query4)
+            cursor.execute(query5)
+            cursor.execute(query6)
+            cursor.execute(query7)
+            cursor.execute(query8)
+            cursor.execute(query9)
+            cursor.execute(query10)
+            cursor.execute(query11)
+            cursor.execute(query12)
+            cursor.execute(query13)
+            cursor.execute(query14)
+            cursor.execute(query15)
+            cursor.execute(query16)
+        source_conn.commit()
 
 
 
     except Exception as e:
-        pass
+        print(f"An error occurred: {e}")
+        source_conn.rollback()
     finally:
-        pass
+        release_db_connection(source_conn)

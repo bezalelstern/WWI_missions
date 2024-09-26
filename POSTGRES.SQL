@@ -82,8 +82,8 @@ SELECT DISTINCT
     mission.target_longitude
 from mission;
 
-alter table mission
-ADD COLUMN target_fk int references target(target_pk);
+ALTER TABLE ADD COLUMN target_fk int references target(target_pk);
+
 
 ALTER TABLE mission
 DROP COLUMN target_country,
@@ -93,7 +93,7 @@ DROP COLUMN target_industry,
 DROP COLUMN target_priority,
 DROP COLUMN target_latitude,
 DROP COLUMN target_longitude;
-
+ADD COLUMN target_fk int references target(target_pk);
 
 
 UPDATE mission
