@@ -4,7 +4,7 @@ from psycopg2 import pool
 connection_pool = psycopg2.pool.SimpleConnectionPool(
             minconn=1,
             maxconn=10,
-            dbname="wwii_missions",
+            dbname="normal_db2",
             user="postgres",
             password="1234",
             host="localhost",

@@ -12,10 +12,10 @@ app = Flask(__name__)
 @app.route('/')
 def hello():
     return "Hello, World!"
-app.register_blueprint(mission_bp, url_prefix="/mission")
+app.register_blueprint(mission_bp, url_prefix="/api")
 
 
-# Closing the connection pool when app shuts down
+#Closing the connection pool when app shuts down
 # @app.teardown_appcontext
 # def close_pool(exception=None):
 #     if connection_pool:
@@ -23,5 +23,5 @@ app.register_blueprint(mission_bp, url_prefix="/mission")
 
 
 if __name__ == "__main__":
-    # normalize_db()
+    normalize_db()
     app.run(debug=True)

@@ -1,17 +1,11 @@
 from db import get_db_connection, release_db_connection
 import psycopg2
 
-def normalize_db():
-    print ("normal")
-    source_conn = get_db_connection()
-    # target_conn = psycopg2.connect(
-    #     dbname="normal_db",
-    #     user="postgres",
-    #     password="1234",
-    #     host="localhost",
-    #     port="5432"
-    # )
+from services.logger import log_error, log
 
+
+def normalize_db():
+    source_conn = get_db_connection()
     try :
         query = """
         insert into normal_mission select * from mission
@@ -126,34 +120,17 @@ def normalize_db():
                """
 
         # execute the queries
-        cur = source_conn.cursor()
-        print("Executing queries...")
+        queries = [query, query1, query2, query3, query3_5, query4, query5, query6, query7, query8, query9, query10, query11, query12, query13, query14, query15, query16]
         with source_conn.cursor() as cursor:
-            cursor.execute(query)
-            source_conn.commit()
-            cursor.execute(query1)
-            cursor.execute(query2)
-            cursor.execute(query3)
-            cursor.execute(query3_5)
-            cursor.execute(query4)
-            cursor.execute(query5)
-            cursor.execute(query6)
-            cursor.execute(query7)
-            cursor.execute(query8)
-            cursor.execute(query9)
-            cursor.execute(query10)
-            cursor.execute(query11)
-            cursor.execute(query12)
-            cursor.execute(query13)
-            cursor.execute(query14)
-            cursor.execute(query15)
-            cursor.execute(query16)
+           for query in queries:
+               cursor.execute(query)
         source_conn.commit()
-
+        log("Normalization completed successfully")
 
 
     except Exception as e:
         print(f"An error occurred: {e}")
+        log_error(f"An error occurred: {e}")
         source_conn.rollback()
     finally:
         release_db_connection(source_conn)
